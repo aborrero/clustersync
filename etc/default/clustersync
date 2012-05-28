@@ -2,24 +2,32 @@
 
 
 # if start or not, values {yes|no}
+# This option is readed just by the init.d script.
 START="yes"
 
 
 # Interval between file checking
 # Value in seconds. Possitive integer expected, default will be used if missing
-# Default: 30        
-
+# Default: 30
 INTERVAL="30"
 
 # Where to connect to compare files
 # If empty, will do nothing.
-NODE_LIST=""
+# A space separated list of FQDNs, IPv4 or IPv6.
+# In this way: NODE_LIST="192.168.2.2 myserver.example.com yourserver fe00::1"
+NODE_LIST="localhost"
 
 
 # The file with the filelist to be synced.
 FILE_LIST="/etc/clustersync.conf"
 
 
+# For determining the sync rsync can work checking the time&size of a file
+# or checking the MD5 sum. Using MD5 is slower but in clustersync works better
+# in a scenario with lot of nodes.
+# Values: {yes|no} Default: no
+USE_MD5="no"
 
-# Loglevel, Values: {no|info|warning|error|debug1|debug2}
+# Loglevel, Values: {no|info|warning|error|debug1|debug2} Default: info
 LOGLEVEL="debug2"
+

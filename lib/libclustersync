@@ -5,12 +5,13 @@
 #
 
 CONFIG_FILE="../etc/default/clustersync"
-FILE_LIST="..etc/clustersync.conf"
-LOCK_FILE="/var/run/clustersync.LOCK"
+FILE_LIST="../etc/clustersync.conf"
+LOCK_FILE="/var/run/clustersync.pid"
 
 RSYNC_BIN="/usr/bin/rsync"
 LOGGER_BIN="/usr/bin/logger"
-LOGGER_ARGS="-t CLUSTERSYNC[$PID] --"
+LOGGER_ARGS="-t clustersync[$PID] --"
+
 #
 # Some functions
 #
@@ -53,12 +54,12 @@ mensaje()
                 egrep  ^"DEBUG-1: "\|^"E: "\|^"I: "\|^"W: " <<< $1 > /dev/null 2>/dev/null
                 if [ $? -eq 0 ]
                 then
-                        $LOGGER_BIN $LOGGER_ARGS $1
+                        $LOGGER_BIN -s $LOGGER_ARGS $1
                 fi
                 ;;
 
         "debug2")
-                $LOGGER_BIN $LOGGER_ARGS $1
+                $LOGGER_BIN -s $LOGGER_ARGS $1
                 ;;
 
         "no")
@@ -92,14 +93,15 @@ function validate_required_bins()
 	mensaje "DEBUG-2: function validate_required_bins"
 	[ -x $RSYNC_BIN ] || { mensaje "E: The bin [$RSYNC_BIN] was not found or wrong permission" ; return 1 ; }
 	[ -x $LOGGER_BIN ] || { mensaje "E: The bin [$LOGGER_BIN] was not found or wrong permission" ; return 1 ; }
+	mensaje "DEBUG-1: all required bins are OK."
 	return 0
-
 }
 
 function check_root()
 {
 	mensaje "DEBUG-2: function check_root()"
-	[ `id -u` -eq 1 ] || return 1
+	[ `id -u` -eq 0 ] || return 1
+	mensaje "DEBUG-1: running as root. This is OK."
 	return 0
 }
 
@@ -107,6 +109,7 @@ function clean_up()
 {
 	mensaje "DEBUG-2: function clean_up()"
 	rm -rf $LOCK_FILE 2> /dev/null
+	mensaje "DEBUG-1: The return code of cleaning the LOCK_FILE [$LOCK_FILE] is $?"
 	exit 0
 }
 
@@ -114,13 +117,14 @@ function reload()
 {
 	mensaje "DEBUG-2: function reload()"
 	source $CONFIG_FILE || { mensaje "E: Error reloading [$CONFIG_FILE]." ; return 1 ; }
+	mensaje "DEBUG-1: reloaded success."
 	return 0
 }
 
 function wait_timeout()
 {
         mensaje "DEBUG-2: function wait_timeout()"
-        mensaje "I: waiting [$INTERVAL] seconds."
+        mensaje "W: waiting [$INTERVAL] seconds."
         sleep $INTERVAL &
         wait $!
 }
@@ -128,25 +132,38 @@ function wait_timeout()
 function loop_sync_files()
 {
 	mensaje "DEBUG-2: function loop_sync_files()"
-	# Sincronia
+
+
+	# Calculating the command that actually sync
+	if [ "$USE_MD5" == "yes" ]
+	then
+		mensaje "DEBUG-2: Using Rsync with MD5 checksum option."
+		rsync_command="$RSYNC_BIN -u -r -v -c --files-from=$FILE_LIST"
+	else
+		mensaje "DEBUG-2: Using Rsync without MD5 checksum option. Normal time&size checks will be used."
+		rsync_command="$RSYNC_BIN -u -r -v --files-from=$FILE_LIST"
+	fi
+
+
+	# Sync operation within NODE_LIST
 	for node in $NODE_LIST
 	do
 		mensaje "DEBUG-1: working now with $node"
 
-		# Si el nodo de la lista no es el propio nodo ejecutando este script
-		# se ejecuta la instruccion de rsync
+		# Operate only if this is not the node of the NODE_LIST
 		if [ "$node" != "$THIS" ]
 		then
-	        	# Se sincronizan los ficheros especificados en $LISTA_FICHEROS
-	        	# Usando como copia maestra el mas reciente.
 			if [ -e $FILE_LIST ]
 			then
-				$RSYNC_BIN -urv --files-from=$FILE_LIST $nodo:/ / 2> /dev/null
+				eval $rsync_command $node:/ / 2> /dev/null > /dev/null; rc=$?
+				# Some control messages
+				[ $rc -ne 0 ] && mensaje "E: Rsync failed while working with node: [$node]."
+				mensaje "DEBUG-1: The return code of the Rsync command was [$rc]"
 			else
 				mensaje "W: $FILE_LIST file not readable."
 			fi
 		else
-			mensaje "DEBUG-2: Local node"
+			mensaje "DEBUG-2: Local node. Doing nothing."
 		fi
 	done
 }
