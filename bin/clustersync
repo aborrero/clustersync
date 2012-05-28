@@ -1,0 +1,27 @@
+#!/bin/bash
+
+PID=$$
+LIBCLUSTERSYNC="../lib/libclustersync"
+THIS="`uname -n`"
+[ -z "$THIS" ] || { echo "E: Unable to get the name of this machine" >&2 ; exit 1 ; }
+
+# Loading libraries and validating execution
+source $LIBCLUSTERSYNC || { echo "E: Unable to load [$LIBCLUSTERSYNC]" >&2 ; exit 1 ; }
+check_root || { mensaje "E: Not running as root" ; exit 1 ; }
+validate_execution || { mensaje "E: Unable to run. The lock file [$LOCK_FILE] already exists and don't belong to this instace." ; exit 1 ; }
+source $CONFIG_FILE || { mensaje "E: Unable to load [$CONFIG_FILE]" ; exit 1 ; }
+
+# Traps declaration
+trap clean_up SIGHUP SIGINT SIGTERM SIGKILL SIGTSTP SIGQUIT
+trap "reload || exit 1" SIGCONT
+
+
+# The main daemon loop
+while true
+do
+	validate_required_bins || { echo "E: Terminating..." ; exit 1 ; }
+	loop_sync_files
+	wait_timeout
+done
+
+exit 0

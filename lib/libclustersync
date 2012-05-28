@@ -1,0 +1,152 @@
+#!/bin/bash
+
+#
+# Some variables
+#
+
+CONFIG_FILE="../etc/default/clustersync"
+FILE_LIST="..etc/clustersync.conf"
+LOCK_FILE="/var/run/clustersync.LOCK"
+
+RSYNC_BIN="/usr/bin/rsync"
+LOGGER_BIN="/usr/bin/logger"
+LOGGER_ARGS="-t CLUSTERSYNC[$PID] --"
+#
+# Some functions
+#
+mensaje()
+{
+        case "$LOGLEVEL" in
+
+        "")
+                egrep  ^"E: "\|^"I: "\|^"W: " <<< $1 > /dev/null 2>/dev/null
+                if [ $? -eq 0 ]
+                then
+                        $LOGGER_BIN $LOGGER_ARGS $1
+                fi
+                ;;
+
+        "error")
+                egrep  ^"E: "\|^"I: "\|^"W: " <<< $1 > /dev/null 2>/dev/null
+                if [ $? -eq 0 ]
+                then
+                        $LOGGER_BIN $LOGGER_ARGS $1
+                fi
+                ;;
+
+        "warning")
+                egrep ^"I: "\|^"W: " <<< $1 > /dev/null 2>/dev/null
+                if [ $? -eq 0 ]
+                then
+                        $LOGGER_BIN $LOGGER_ARGS $1
+                fi
+                ;;
+        "info")
+                egrep ^"I: " <<< $1 > /dev/null 2>/dev/null
+                if [ $? -eq 0 ]
+                then
+                        $LOGGER_BIN $LOGGER_ARGS $1
+                fi
+                ;;
+
+        "debug1")
+                egrep  ^"DEBUG-1: "\|^"E: "\|^"I: "\|^"W: " <<< $1 > /dev/null 2>/dev/null
+                if [ $? -eq 0 ]
+                then
+                        $LOGGER_BIN $LOGGER_ARGS $1
+                fi
+                ;;
+
+        "debug2")
+                $LOGGER_BIN $LOGGER_ARGS $1
+                ;;
+
+        "no")
+                echo "no log!" > /dev/null
+                ;;
+        esac
+
+}
+
+function validate_execution()
+{
+	mensaje "DEBUG-2: function validate_execution"
+
+	if [ -e $LOCK_FILE ]
+	then
+		mensaje "DEBUG-1: The lock file $LOCK_FILE exists"
+		if [ "`cat $LOCK_FILE`" != $PID ]
+		then
+			mensaje "DEBUG-1: The pid stored in the lock file doesn't match the pid of this instance."
+			return 1
+		fi
+	else
+		mensaje "DEBUG-1: Storing the pid of this instance in the lock file $LOCK_FILE"
+     		echo "$PID" > $LOCK_FILE
+	fi
+	return 0
+}
+
+function validate_required_bins()
+{
+	mensaje "DEBUG-2: function validate_required_bins"
+	[ -x $RSYNC_BIN ] || { mensaje "E: The bin [$RSYNC_BIN] was not found or wrong permission" ; return 1 ; }
+	[ -x $LOGGER_BIN ] || { mensaje "E: The bin [$LOGGER_BIN] was not found or wrong permission" ; return 1 ; }
+	return 0
+
+}
+
+function check_root()
+{
+	mensaje "DEBUG-2: function check_root()"
+	[ `id -u` -eq 1 ] || return 1
+	return 0
+}
+
+function clean_up()
+{
+	mensaje "DEBUG-2: function clean_up()"
+	rm -rf $LOCK_FILE 2> /dev/null
+	exit 0
+}
+
+function reload()
+{
+	mensaje "DEBUG-2: function reload()"
+	source $CONFIG_FILE || { mensaje "E: Error reloading [$CONFIG_FILE]." ; return 1 ; }
+	return 0
+}
+
+function wait_timeout()
+{
+        mensaje "DEBUG-2: function wait_timeout()"
+        mensaje "I: waiting [$INTERVAL] seconds."
+        sleep $INTERVAL &
+        wait $!
+}
+
+function loop_sync_files()
+{
+	mensaje "DEBUG-2: function loop_sync_files()"
+	# Sincronia
+	for node in $NODE_LIST
+	do
+		mensaje "DEBUG-1: working now with $node"
+
+		# Si el nodo de la lista no es el propio nodo ejecutando este script
+		# se ejecuta la instruccion de rsync
+		if [ "$node" != "$THIS" ]
+		then
+	        	# Se sincronizan los ficheros especificados en $LISTA_FICHEROS
+	        	# Usando como copia maestra el mas reciente.
+			if [ -e $FILE_LIST ]
+			then
+				$RSYNC_BIN -urv --files-from=$FILE_LIST $nodo:/ / 2> /dev/null
+			else
+				mensaje "W: $FILE_LIST file not readable."
+			fi
+		else
+			mensaje "DEBUG-2: Local node"
+		fi
+	done
+}
