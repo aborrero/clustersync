@@ -156,6 +156,7 @@ function loop_sync_files()
 		then
 			if [ -e $FILE_LIST ]
 			then
+				mensaje "DEBUG-2: The Rsync command is [$rsync_command $node:/ /]"
 				eval $rsync_command $node:/ / 2> /dev/null > /dev/null; rc=$?
 				# Some control messages
 				[ $rc -ne 0 ] && mensaje "E: Rsync failed while working with node: [$node]."
