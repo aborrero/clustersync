@@ -126,6 +126,8 @@ function wait_timeout()
 {
         mensaje "DEBUG-2: function wait_timeout()"
         mensaje "W: waiting [$INTERVAL] seconds."
+        [ -z "$INTERVAL" ] && INTERVAL=30
+        [ $INTERVAL -lt 1 ] && INTERVAL=30
         sleep $INTERVAL &
         wait $!
 }
