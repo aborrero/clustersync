@@ -77,7 +77,7 @@ do_stop()
 # Function that sends a SIGHUP to the daemon/service
 #
 do_reload() {
-	start-stop-daemon --stop --signal SIGHUP --quiet --pidfile $PIDFILE --name $NAME
+	start-stop-daemon --stop --signal HUP --quiet --pidfile $PIDFILE --name $NAME
 	return 0
 }
 
