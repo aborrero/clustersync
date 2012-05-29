@@ -1,33 +1,36 @@
 #!/bin/bash
 
 PID=$$
-LIBCLUSTERSYNC="../lib/libclustersync"
+LIBCLUSTERSYNC="/usr/lib/libclustersync"
 THIS="`uname -n`"
 [ ! -z "$THIS" ] || { echo "E: Unable to get the name of this machine" >&2 ; exit 1 ; }
 
 # Loading libraries, config and validating execution
 source $LIBCLUSTERSYNC || { echo "E: Unable to load [$LIBCLUSTERSYNC]" >&2 ; exit 1 ; }
-source $CONFIG_FILE || { mensaje "E: Unable to load [$CONFIG_FILE]" ; exit 1 ; }
-check_root || { mensaje "E: Not running as root" ; exit 1 ; }
-validate_execution || { mensaje "E: Unable to run. The lock file [$LOCK_FILE] already exists and don't belong to this instace." ; exit 1 ; }
-mensaje "I: Loading complete"
+config_load || exit 1 #Exit if unable to load the default config file
+check_root || { message "E: Not running as root" ; exit 1 ; }
+validate_execution || { message "E: Unable to run. The lock file [$LOCK_FILE] already exists and don't belong to this instace." ; exit 1 ; }
+message "I: Loading complete"
 
 
-mensaje "DEBUG-2: Moving to /"
+# Preparing correct execution
+message "DEBUG-2: Moving to /"
 cd / 2> /dev/null > /dev/null
-[ $? -ne 0 ] && mensaje "DEBUG-1: Failed to move to /"
+[ $? -ne 0 ] && message "DEBUG-1: Failed to move to /"
 
 # Traps declaration
 trap clean_up SIGINT SIGTERM SIGKILL SIGTSTP SIGQUIT
-trap "reload || exit 1" SIGHUP SIGCONT
+trap "config_load || exit 1" SIGHUP SIGCONT
 
 
 # The main daemon loop
+mensaje "DEBUG-1: Entering now the main loop"
 while true
 do
 	validate_required_bins || { echo "E: Terminating..." ; exit 1 ; }
 	loop_sync_files
 	wait_timeout
+	mensaje "DEBUG-2: A loop is completed."
 done
 
 exit 0

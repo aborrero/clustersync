@@ -31,3 +31,6 @@ USE_MD5="no"
 # Loglevel, Values: {no|info|warning|error|debug1|debug2} Default: info
 LOGLEVEL="debug2"
 
+# Bandwith limit, in KBPS. A possitive integer is expected. Zero means no limit.
+# Default: 0
+BWLIMIT=0

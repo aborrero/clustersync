@@ -4,8 +4,8 @@
 # Some variables
 #
 
-CONFIG_FILE="../etc/default/clustersync"
-FILE_LIST="../etc/clustersync.conf"
+CONFIG_FILE="/etc/default/clustersync"
+FILE_LIST="/etc/clustersync.conf"
 LOCK_FILE="/var/run/clustersync.pid"
 
 RSYNC_BIN="/usr/bin/rsync"
@@ -15,8 +15,12 @@ LOGGER_ARGS="-t clustersync[$PID] --"
 #
 # Some functions
 #
-mensaje()
+function message()
 {
+	# If error, print to stderr directly
+	grep ^"E: " <<< $1 > /dev/null 2> /dev/null && echo $1 >&2
+
+	# Lets print or not the message, what ever the user choices
         case "$LOGLEVEL" in
 
         "")
@@ -67,22 +71,23 @@ mensaje()
                 ;;
         esac
 
+	return 0
 }
 
 function validate_execution()
 {
-	mensaje "DEBUG-2: function validate_execution"
+	message "DEBUG-2: function validate_execution"
 
 	if [ -e $LOCK_FILE ]
 	then
-		mensaje "DEBUG-1: The lock file $LOCK_FILE exists"
+		message "DEBUG-1: The lock file $LOCK_FILE exists"
 		if [ "`cat $LOCK_FILE`" != $PID ]
 		then
-			mensaje "DEBUG-1: The pid stored in the lock file doesn't match the pid of this instance."
+			message "DEBUG-1: The pid stored in the lock file doesn't match the pid of this instance."
 			return 1
 		fi
 	else
-		mensaje "DEBUG-1: Storing the pid of this instance in the lock file $LOCK_FILE"
+		message "DEBUG-1: Storing the pid of this instance in the lock file $LOCK_FILE"
      		echo "$PID" > $LOCK_FILE
 	fi
 	return 0
@@ -90,84 +95,109 @@ function validate_execution()
 
 function validate_required_bins()
 {
-	mensaje "DEBUG-2: function validate_required_bins"
-	[ -x $RSYNC_BIN ] || { mensaje "E: The bin [$RSYNC_BIN] was not found or wrong permission" ; return 1 ; }
-	[ -x $LOGGER_BIN ] || { mensaje "E: The bin [$LOGGER_BIN] was not found or wrong permission" ; return 1 ; }
-	mensaje "DEBUG-1: all required bins are OK."
+	message "DEBUG-2: function validate_required_bins"
+	[ -x $RSYNC_BIN ] || { message "E: The bin [$RSYNC_BIN] was not found or wrong permission" ; return 1 ; }
+	[ -x $LOGGER_BIN ] || { message "E: The bin [$LOGGER_BIN] was not found or wrong permission" ; return 1 ; }
+	message "DEBUG-1: all required bins are OK."
 	return 0
 }
 
 function check_root()
 {
-	mensaje "DEBUG-2: function check_root()"
+	message "DEBUG-2: function check_root()"
 	[ `id -u` -eq 0 ] || return 1
-	mensaje "DEBUG-1: running as root. This is OK."
+	message "DEBUG-1: running as root. This is OK."
 	return 0
 }
 
 function clean_up()
 {
-	mensaje "DEBUG-2: function clean_up()"
+	message "DEBUG-2: function clean_up()"
 	rm -rf $LOCK_FILE 2> /dev/null
-	mensaje "DEBUG-1: The return code of cleaning the LOCK_FILE [$LOCK_FILE] is $?"
-	mensaje "I: Cleaning up and finishing..."
+	message "DEBUG-1: The return code of cleaning the LOCK_FILE [$LOCK_FILE] is $?"
+	message "I: Cleaning up and finishing..."
 	exit 0
 }
 
-function reload()
+function config_load()
 {
-	mensaje "DEBUG-2: function reload()"
-	source $CONFIG_FILE || { mensaje "E: Error reloading [$CONFIG_FILE]." ; return 1 ; }
-	mensaje "DEBUG-1: reloaded success."
+	message "DEBUG-2: function config_load()"
+	source $CONFIG_FILE || { message "E: Error loading [$CONFIG_FILE]." ; return 1 ; }
+	message "DEBUG-1: loaded success."
+
+	# Validating INTERVAL option
+        ( [ -z "$INTERVAL" ] || grep ^[[:digit:]]+$ <<< $INTERVAL > /dev/null 2> /dev/null || [ $INTERVAL -lt 1 ] ) \
+		&& { INTERVAL=30 ; message "W: Using default INTERVAL, 30 seconds." ; }
+
+	# Validating BWLIMIT option
+        ( [ -z "$BWLIMIT" ] || grep ^[[:digit:]]+$ <<< $BWLIMIT > /dev/null 2> /dev/null || [ $BWLIMIT -lt 0 ] ) \
+		&& { BWLIMIT=0 ; message "W: Using default BWLIMIT, no limit :)" ; }
+
 	return 0
 }
 
 function wait_timeout()
 {
-        mensaje "DEBUG-2: function wait_timeout()"
-        mensaje "W: waiting [$INTERVAL] seconds."
-        [ -z "$INTERVAL" ] && INTERVAL=30
-        [ $INTERVAL -lt 1 ] && INTERVAL=30
+        message "DEBUG-2: function wait_timeout()"
+        message "I: waiting [$INTERVAL] seconds."
         sleep $INTERVAL &
         wait $!
 }
 
-function loop_sync_files()
+# this function modifies the global variable "rsync_command"
+function calculate_rsync_command()
 {
-	mensaje "DEBUG-2: function loop_sync_files()"
-
+	message "DEBUG-2: function calculate_rsync_command()"
 
 	# Calculating the command that actually sync
-	if [ "$USE_MD5" == "yes" ]
-	then
-		mensaje "DEBUG-2: Using Rsync with MD5 checksum option."
-		rsync_command="$RSYNC_BIN -u -r -v -c --files-from=$FILE_LIST"
-	else
-		mensaje "DEBUG-2: Using Rsync without MD5 checksum option. Normal time&size checks will be used."
-		rsync_command="$RSYNC_BIN -u -r -v --files-from=$FILE_LIST"
-	fi
 
+	# Using MD5 but no bwlimit
+	[ "$USE_MD5" == "yes" ] && [ "$BWLIMIT" -eq 0 ] && rsync_command="$RSYNC_BIN -u -r -c --files-from=$FILE_LIST --out-format=%f"
+
+	# Not using MD5 nor bwlimit
+	[ "$USE_MD5" != "yes" ] && [ "$BWLIMIT" -eq 0 ] && rsync_command="$RSYNC_BIN -u -r --files-from=$FILE_LIST --out-format=%f"
+
+	# Not using MD5 but bwlimit
+	[ "$USE_MD5" != "yes" ] && [ "$BWLIMIT" -gt 0 ] && rsync_command="$RSYNC_BIN -u -r --bwlimit $BWLIMIT --files-from=$FILE_LIST --out-format=%f"
+
+	# Using MD5 and bwlimit
+	[ "$USE_MD5" == "yes" ] && [ "$BWLIMIT" -gt 0 ] && rsync_command="$RSYNC_BIN -u -r -c --bwlimit $BWLIMIT --files-from=$FILE_LIST --out-format=%f"
+
+	return 0
+}
+
+function loop_sync_files()
+{
+	message "DEBUG-2: function loop_sync_files()"
+
+	# the function calculate_rsync_command uses the new global variable
+	rsync_command=""
+	calculate_rsync_command
 
 	# Sync operation within NODE_LIST
 	for node in $NODE_LIST
 	do
-		mensaje "DEBUG-1: working now with $node"
+		message "DEBUG-1: working now with $node"
 
 		# Operate only if this is not the node of the NODE_LIST
 		if [ "$node" != "$THIS" ]
 		then
-			if [ -e $FILE_LIST ]
+			if [ -r $FILE_LIST ]
 			then
-				mensaje "DEBUG-2: The Rsync command is [$rsync_command $node:/ /]"
-				eval $rsync_command $node:/ / 2> /dev/null > /dev/null; rc=$?
+				message "DEBUG-2: The Rsync command is [$rsync_command $node:/ /]"
+
+				# Executing rsync and saving the output for loggin
+				transmission_log=$( eval $rsync_command $node:/ / 2> /dev/null ) ; rc=$?
+				[ ! -z "$transmission_log" ] && message "I: Updated the following file(s): $transmission_log"
+
 				# Some control messages
-				[ $rc -ne 0 ] && mensaje "E: Rsync failed while working with node: [$node]."
-				mensaje "DEBUG-1: The return code of the Rsync command was [$rc]"
+				[ $rc -ne 0 ] && message "E: Rsync failed while working with node: [$node]."
+				message "DEBUG-1: The return code of the Rsync command was [$rc]"
 			else
-				mensaje "W: $FILE_LIST file not readable."
+				message "W: $FILE_LIST file not readable."
 			fi
 		else
-			mensaje "DEBUG-2: Local node. Doing nothing."
+			message "DEBUG-2: Local node. Doing nothing."
 		fi
 	done
 }

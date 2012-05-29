@@ -50,6 +50,12 @@ in a scenario with lot of nodes.
 
 Loglevel, Values: {no|info|warning|error|debug1|debug2} Default: error
 
+`BWLIMIT="0"`
+
+Bandwith limit, in KBPS. A possitive integer is expected. Zero means no limit.
+Default: 0
+
+
 
 
 /etc/clustersync.conf
