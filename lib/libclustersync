@@ -110,6 +110,7 @@ function clean_up()
 	mensaje "DEBUG-2: function clean_up()"
 	rm -rf $LOCK_FILE 2> /dev/null
 	mensaje "DEBUG-1: The return code of cleaning the LOCK_FILE [$LOCK_FILE] is $?"
+	mensaje "I: Cleaning up and finishing..."
 	exit 0
 }
 
