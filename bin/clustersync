@@ -18,8 +18,8 @@ cd / 2> /dev/null > /dev/null
 [ $? -ne 0 ] && mensaje "DEBUG-1: Failed to move to /"
 
 # Traps declaration
-trap clean_up SIGHUP SIGINT SIGTERM SIGKILL SIGTSTP SIGQUIT
-trap "reload || exit 1" SIGCONT
+trap clean_up SIGINT SIGTERM SIGKILL SIGTSTP SIGQUIT
+trap "reload || exit 1" SIGHUP SIGCONT
 
 
 # The main daemon loop
