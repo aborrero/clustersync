@@ -39,6 +39,7 @@ SCRIPTNAME=/etc/init.d/$NAME
 #
 do_start()
 {
+	[ "$START" != "yes" ] && return 1
 	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --background --test > /dev/null \
 		|| return 1
 	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --background -- \
