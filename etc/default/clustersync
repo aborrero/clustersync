@@ -1,6 +1,5 @@
 # This is the default file for clustersync
 
-
 # if start or not, values {yes|no}
 # This option is readed just by the init.d script.
 START="yes"
