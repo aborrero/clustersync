@@ -24,7 +24,7 @@ trap "config_load || exit 1" SIGHUP SIGCONT
 
 
 # The main daemon loop
-mensaje "DEBUG-1: Entering now the main loop"
+message "DEBUG-1: Entering now the main loop"
 while true
 do
 	validate_required_bins || { echo "E: Terminating..." ; exit 1 ; }
