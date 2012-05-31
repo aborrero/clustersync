@@ -152,16 +152,20 @@ function calculate_rsync_command()
 	# Calculating the command that actually sync
 
 	# Using MD5 but no bwlimit
-	[ "$USE_MD5" == "yes" ] && [ "$BWLIMIT" -eq 0 ] && rsync_command="$RSYNC_BIN -u -r -c --files-from=$FILE_LIST --out-format=%f"
+	[ "$USE_MD5" == "yes" ] && [ "$BWLIMIT" -eq 0 ] && rsync_command="$RSYNC_BIN -u -r -c --files-from=$FILE_LIST --out-format=%f" \
+		&& message "DEBUG-1: Using Rsync with MD5 but no bwlimit."
 
 	# Not using MD5 nor bwlimit
-	[ "$USE_MD5" != "yes" ] && [ "$BWLIMIT" -eq 0 ] && rsync_command="$RSYNC_BIN -u -r --files-from=$FILE_LIST --out-format=%f"
+	[ "$USE_MD5" != "yes" ] && [ "$BWLIMIT" -eq 0 ] && rsync_command="$RSYNC_BIN -u -r --files-from=$FILE_LIST --out-format=%f" \
+		&& message "DEBUG-1: Using Rsync without MD5 nor bwlimit."
 
 	# Not using MD5 but bwlimit
-	[ "$USE_MD5" != "yes" ] && [ "$BWLIMIT" -gt 0 ] && rsync_command="$RSYNC_BIN -u -r --bwlimit $BWLIMIT --files-from=$FILE_LIST --out-format=%f"
+	[ "$USE_MD5" != "yes" ] && [ "$BWLIMIT" -gt 0 ] && rsync_command="$RSYNC_BIN -u -r --bwlimit $BWLIMIT --files-from=$FILE_LIST --out-format=%f" \
+		&& message "DEBUG-1: Using Rsync without MD5 but bwlimit yes."
 
 	# Using MD5 and bwlimit
-	[ "$USE_MD5" == "yes" ] && [ "$BWLIMIT" -gt 0 ] && rsync_command="$RSYNC_BIN -u -r -c --bwlimit $BWLIMIT --files-from=$FILE_LIST --out-format=%f"
+	[ "$USE_MD5" == "yes" ] && [ "$BWLIMIT" -gt 0 ] && rsync_command="$RSYNC_BIN -u -r -c --bwlimit $BWLIMIT --files-from=$FILE_LIST --out-format=%f" \
+		&& message "DEBUG-1: Using Rsync wit MD5 and bwlimit."
 
 	return 0
 }
@@ -187,12 +191,17 @@ function loop_sync_files()
 				message "DEBUG-2: The Rsync command is [$rsync_command $node:/ /]"
 
 				# Executing rsync and saving the output for loggin
-				transmission_log=$( eval $rsync_command $node:/ / 2> /dev/null ) ; rc=$?
-				[ ! -z "$transmission_log" ] && message "I: Updated the following file(s) from [$node]: $transmission_log"
+				transmission_log=$( eval $rsync_command $node:/ / 2>&1 ) ; rc=$?
+				message "DEBUG-1: The return code of the Rsync command was [$rc]"
 
 				# Some control messages
-				[ $rc -ne 0 ] && message "E: Rsync failed while working with node: [$node]."
-				message "DEBUG-1: The return code of the Rsync command was [$rc]"
+				if [ $rc -eq 0 ]
+				then
+					[ ! -z "$transmission_log" ] && message "W: Updated the following file(s) from [$node]: $transmission_log"
+				else
+					[ ! -z "$transmission_log" ] && message "E: Rsync command failed while working with node [$node] Reason: $transmission_log"
+					[ -z "$transmission_log" ] && message "E: Rsync command failed while working with node [$node]. No reason available."
+				fi
 			else
 				message "W: $FILE_LIST file not readable."
 			fi
