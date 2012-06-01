@@ -30,8 +30,8 @@ Possitive integer expected, default will be used if missing. Default: 30
 `NODE_LIST=""`
 
 Where to connect to compare files. If empty, will do nothing.
-A space separated list of FQDNs, IPv4 or IPv6.
-In this way: NODE_LIST="192.168.2.2 myserver.example.com yourserver fe00::1"
+A space separated list of names as `uname -n` shows
+In this way: NODE_LIST="node1 node2"
 As you can sync this file itself, be free to declare all nodes including the one running
 this daemon in each node's NODE_LIST list.
 
