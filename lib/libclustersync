@@ -24,7 +24,8 @@ function message()
         case "$LOGLEVEL" in
 
         "")
-                egrep  ^"E: "\|^"I: "\|^"W: " <<< $1 > /dev/null 2>/dev/null
+		#same as error, what is default
+                egrep  ^"E: " <<< $1 > /dev/null 2>/dev/null
                 if [ $? -eq 0 ]
                 then
                         $LOGGER_BIN $LOGGER_ARGS $1
@@ -32,7 +33,7 @@ function message()
                 ;;
 
         "error")
-                egrep  ^"E: "\|^"I: "\|^"W: " <<< $1 > /dev/null 2>/dev/null
+                egrep  ^"E: " <<< $1 > /dev/null 2>/dev/null
                 if [ $? -eq 0 ]
                 then
                         $LOGGER_BIN $LOGGER_ARGS $1
@@ -40,14 +41,14 @@ function message()
                 ;;
 
         "warning")
-                egrep ^"I: "\|^"W: " <<< $1 > /dev/null 2>/dev/null
+                egrep ^"E: "\|^"W: " <<< $1 > /dev/null 2>/dev/null
                 if [ $? -eq 0 ]
                 then
                         $LOGGER_BIN $LOGGER_ARGS $1
                 fi
                 ;;
         "info")
-                egrep ^"I: " <<< $1 > /dev/null 2>/dev/null
+                egrep  ^"E: "\|^"I: "\|^"W: " <<< $1 > /dev/null 2>/dev/null
                 if [ $? -eq 0 ]
                 then
                         $LOGGER_BIN $LOGGER_ARGS $1
