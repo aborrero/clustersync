@@ -27,7 +27,7 @@ trap "config_load || exit 1" SIGHUP SIGCONT
 message "DEBUG-1: Entering now the main loop"
 while true
 do
-	validate_required_bins || { echo "E: Terminating..." ; exit 1 ; }
+	validate_required_bins || { echo "E: Terminating..." >&2 ; exit 1 ; }
 	loop_sync_files
 	wait_timeout
 	mensaje "DEBUG-2: A loop is completed."
