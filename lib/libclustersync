@@ -140,7 +140,7 @@ function config_load()
 function wait_timeout()
 {
         message "DEBUG-2: function wait_timeout()"
-        message "I: waiting [$INTERVAL] seconds."
+        message "DEBUG-1: waiting [$INTERVAL] seconds."
         sleep $INTERVAL &
         wait $!
 }
@@ -192,7 +192,7 @@ function loop_sync_files()
 				message "DEBUG-2: The Rsync command is [$rsync_command $node:/ /]"
 
 				# Executing rsync and saving the output for loggin
-				transmission_log="$( eval $rsync_command $node:/ / 2>&1 )" 
+				transmission_log="$( eval $rsync_command $node:/ / 2>&1 )"
 				rc=$?
 				message "DEBUG-1: The return code of the Rsync command was [$rc]"
 
@@ -211,4 +211,5 @@ function loop_sync_files()
 			message "DEBUG-2: Local node. Doing nothing."
 		fi
 	done
+	return 0
 }
