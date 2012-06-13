@@ -205,7 +205,7 @@ function loop_sync_files()
 					[ -z "$transmission_log" ] && message "E: Rsync command failed while working with node [$node]. No reason available."
 				fi
 			else
-				message "W: $FILE_LIST file not readable."
+				message "W: $FILE_LIST file not readable. Doing nothing."
 			fi
 		else
 			message "DEBUG-2: Local node. Doing nothing."
