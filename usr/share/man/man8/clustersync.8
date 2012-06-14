@@ -1,0 +1,47 @@
+.TH CLUSTERSYNC 8 "1 Jun 2012"
+.SH NAME
+clustersync \- Tool for replicating and syncing config files
+.SH SYNOPSIS
+\fBclustersync\fP
+.SH DESCRIPTION
+\fBclustersync\fP is a daemon based on \fBrsync\fP that check for
+changes on files across a cluster. Running clustersync in all nodes
+of a cluster with the same configuration will result in having all
+config files and other data synced.
+.SH FILES
+.TP
+\fB/etc/default/clustersync\fR
+The main and default config file of clustersync.
+.TP
+\fCSTART="{yes|no}"\fP
+If start or not. This option is readed just by the init.d script.
+.TP
+\fCINTERVAL="integer"\fP
+Interval between file checking. Value in seconds. Possitive integer expected, 
+default will be used if missing. Default: 30
+.TP
+\fCNODE_LIST="name1 name2"\fP
+Where to connect to compare files. If empty, will do nothing. A space separated list of names as `uname -n` shows
+In this way: NODE_LIST="node1 node2 node3" 
+As you can sync this file itself, be free to declare all nodes including the one running this daemon in each node's NODE_LIST list.
+.TP
+\fCFILE_LIST="file"\fP
+The file with the filelist to be synced. Default is /etc/clustersync.conf
+.TP
+\fCUSE_MD5="{yes|no}"\fP
+For determining the sync rsync can work checking the time&size of a file or checking the MD5 sum. 
+Using MD5 is slower but in clustersync works better in a scenario with lot of nodes. Default: no
+.TP
+\fCLOGLEVEL="{no|info|warning|error|debug1|debug2}"\fP
+The loglevel you want to get. Default: error
+.TP
+\fCBWLIMIT="integer"\fP
+Bandwith limit, in KBPS. A possitive integer is expected. Zero means no limit. Default: 0
+.TP
+\fB/etc/clustersync.conf\fR
+Use this file to declare the filelist you want to have in sync. Only a file route per line, without comments. 
+This file will be passed to \fBrsync\fP in the option "--files-from="
+.SH "SEE ALSO"
+rsync(1)
+.SH BUGS AND SUGGESTIONS
+Contact the author, see the code or whatever at https://github.com/aborrero/clustersync
