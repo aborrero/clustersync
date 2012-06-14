@@ -199,7 +199,7 @@ function loop_sync_files()
 				# Some control messages
 				if [ $rc -eq 0 ]
 				then
-					[ ! -z "$transmission_log" ] && message "W: Updated the following file(s) from [$node]: $transmission_log"
+					[ ! -z "$transmission_log" ] && message "I: Updated the following file(s) from [$node]: $transmission_log"
 				else
 					[ ! -z "$transmission_log" ] && message "E: Rsync command failed while working with node [$node] Reason: $transmission_log"
 					[ -z "$transmission_log" ] && message "E: Rsync command failed while working with node [$node]. No reason available."
