@@ -43,6 +43,8 @@ Bandwidth limit, in KBPS. A possitive integer is expected. Zero means no limit. 
 \fB/etc/clustersync.conf\fR
 Use this file to declare the filelist you want to have in sync. Only an absolute file path per line, without comments. 
 This file will be passed to \fBrsync\fP in the option "--files-from=" (see \fBrsync(1)\fP).
+.SH RECOMMENDATIONS
+All systems using \fBClustersync\fP must have the same time.
 .SH "SEE ALSO"
 \fBrsync(1)\fP
 .SH BUGS AND SUGGESTIONS
