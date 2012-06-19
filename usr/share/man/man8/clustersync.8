@@ -1,4 +1,4 @@
-.TH CLUSTERSYNC 8 "1 Jun 2012"
+.TH CLUSTERSYNC 8 "19 Jun 2012"
 .SH NAME
 clustersync \- Tool for replicating and syncing config files
 .SH SYNOPSIS
@@ -12,36 +12,38 @@ config files and other data synced.
 .TP
 \fB/etc/default/clustersync\fR
 The main and default config file of clustersync.
+.RS
 .TP
-\fCSTART="{yes|no}"\fP
+\fISTART="{yes|no}"\fP
 If start or not. This option is readed just by the init.d script.
 .TP
-\fCINTERVAL="integer"\fP
+\fIINTERVAL="integer"\fP
 Interval between file checking. Value in seconds. Possitive integer expected, 
 default will be used if missing. Default: 30
 .TP
-\fCNODE_LIST="name1 name2"\fP
+\fINODE_LIST="node1 node2"\fP
 Where to connect to compare files. If empty, will do nothing. A space separated list of names as `uname -n` shows
 In this way: NODE_LIST="node1 node2 node3" 
 As you can sync this file itself, be free to declare all nodes including the one running this daemon in each node's NODE_LIST list.
 .TP
-\fCFILE_LIST="file"\fP
-The file with the filelist to be synced. Default is /etc/clustersync.conf
+\fIFILE_LIST="file"\fP
+The file with the filelist to be synced. Default is \fB/etc/clustersync.conf\fP.
 .TP
-\fCUSE_MD5="{yes|no}"\fP
+\fIUSE_MD5="{yes|no}"\fP
 For determining the sync rsync can work checking the time&size of a file or checking the MD5 sum. 
-Using MD5 is slower but in clustersync works better in a scenario with lot of nodes. Default: no
+Using MD5 is slower but in clustersync works better in a scenario with lot of nodes (avoiding feedback). Default: no
 .TP
-\fCLOGLEVEL="{no|info|warning|error|debug1|debug2}"\fP
-The loglevel you want to get. Default: error
+\fILOGLEVEL="{no|info|warning|error|debug1|debug2}"\fP
+The loglevel you want to get, wich are self-explanatory. Default: error
 .TP
-\fCBWLIMIT="integer"\fP
+\fIBWLIMIT="integer"\fP
 Bandwith limit, in KBPS. A possitive integer is expected. Zero means no limit. Default: 0
+.RE
 .TP
 \fB/etc/clustersync.conf\fR
-Use this file to declare the filelist you want to have in sync. Only a file route per line, without comments. 
-This file will be passed to \fBrsync\fP in the option "--files-from="
+Use this file to declare the filelist you want to have in sync. Only an absolute file path per line, without comments. 
+This file will be passed to \fBrsync\fP in the option "--files-from=" (see \fBrsync(1)\fP)
 .SH "SEE ALSO"
-rsync(1)
+\fBrsync(1)\fP
 .SH BUGS AND SUGGESTIONS
-Contact the author, see the code or whatever at https://github.com/aborrero/clustersync
+Contact the author, see the code or whatever at \fBhttps://github.com/aborrero/clustersync\fP
