@@ -127,12 +127,18 @@ function config_load()
 	message "DEBUG-1: $CONFIG_FILE loaded success."
 
 	# Validating INTERVAL option
-        ( [ -z "$INTERVAL" ] || grep ^[[:digit:]]+$ <<< $INTERVAL > /dev/null 2> /dev/null || [ "$INTERVAL" -lt 1 ] 2> /dev/null ) \
-		&& { INTERVAL=30 ; message "W: Using default INTERVAL, 30 seconds." ; }
+	local flag_use_default_interval=0
+	[ -z "$INTERVAL" ] && flag_use_default_interval=1
+	egrep ^[[:digit:]]+$ <<< $INTERVAL > /dev/null 2> /dev/null || flag_use_default_interval=1
+	[ "$INTERVAL" -lt 0 ] 2> /dev/null && flag_use_default_interval=1
+	[ $flag_use_default_interval -eq 1 ] && { INTERVAL=30 ; message "W: Using default INTERVAL, 30 seconds." ; }
 
 	# Validating BWLIMIT option
-        ( [ -z "$BWLIMIT" ] || grep ^[[:digit:]]+$ <<< $BWLIMIT > /dev/null 2> /dev/null || [ "$BWLIMIT" -lt 0 ] 2> /dev/null ) \
-		|| { BWLIMIT=0 ; message "W: Using default BWLIMIT, no limit :)" ; }
+	local flag_use_default_bwlimit=0
+	[ -z "$BWLIMIT" ] && flag_use_default_bwlimit=1
+	egrep ^[[:digit:]]+$ <<< $BWLIMIT > /dev/null 2> /dev/null || flag_use_default_bwlimit=1
+	[ "$BWLIMIT" -lt 0 ] 2> /dev/null && flag_use_default_interval=1
+	[ $flag_use_default_bwlimit -eq 1 ] && { BWLIMIT=0 ; message "W: Using default BWLIMIT, no limit :)" ; }
 
 	return 0
 }

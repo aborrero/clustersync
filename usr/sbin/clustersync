@@ -32,7 +32,7 @@ do
 	validate_required_bins || { echo "E: Terminating..." >&2 ; exit 1 ; }
 	loop_sync_files
 	wait_timeout
-	mensaje "DEBUG-2: A loop is completed."
+	message "DEBUG-2: A loop is completed."
 done
 
 exit 0
