@@ -22,27 +22,27 @@ Interval between file checking. Value in seconds. Possitive integer expected,
 default will be used if missing. Default: 30
 .TP
 \fINODE_LIST="node1 node2"\fP
-Where to connect to compare files. If empty, will do nothing. A space separated list of names as `uname -n` shows
-In this way: NODE_LIST="node1 node2 node3" 
+Where to connect to compare files. If empty, will do nothing. A space separated list of names as `uname -n` shows, in this way: NODE_LIST="node1 node2 node3".
+
 As you can sync this file itself, be free to declare all nodes including the one running this daemon in each node's NODE_LIST list.
 .TP
 \fIFILE_LIST="file"\fP
 The file with the filelist to be synced. Default is \fB/etc/clustersync.conf\fP.
 .TP
 \fIUSE_MD5="{yes|no}"\fP
-For determining the sync rsync can work checking the time&size of a file or checking the MD5 sum. 
+For determining the sync, \fBrsync\fP can work checking the time&size of a file or checking the MD5 sum. 
 Using MD5 is slower but in clustersync works better in a scenario with lot of nodes (avoiding feedback). Default: no
 .TP
-\fILOGLEVEL="{no|info|warning|error|debug1|debug2}"\fP
-The loglevel you want to get, wich are self-explanatory. Default: error
+\fILOGLEVEL="{no|error|warning|info|debug1|debug2}"\fP
+The loglevel you want to get, wich are self-explanatory. Logging is performed using \fBlogger\fP interface (see \fBlogger(1)\fP) to syslog. Default: error
 .TP
 \fIBWLIMIT="integer"\fP
-Bandwith limit, in KBPS. A possitive integer is expected. Zero means no limit. Default: 0
+Bandwidth limit, in KBPS. A possitive integer is expected. Zero means no limit. Default: 0
 .RE
 .TP
 \fB/etc/clustersync.conf\fR
 Use this file to declare the filelist you want to have in sync. Only an absolute file path per line, without comments. 
-This file will be passed to \fBrsync\fP in the option "--files-from=" (see \fBrsync(1)\fP)
+This file will be passed to \fBrsync\fP in the option "--files-from=" (see \fBrsync(1)\fP).
 .SH "SEE ALSO"
 \fBrsync(1)\fP
 .SH BUGS AND SUGGESTIONS
