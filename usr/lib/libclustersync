@@ -147,6 +147,8 @@ function wait_timeout()
 {
         message "DEBUG-2: function wait_timeout()"
         message "DEBUG-1: waiting [$INTERVAL] seconds."
+	# using wait because we expect asynchronous signals and
+	# sleep doesn't support
         sleep $INTERVAL &
         wait $!
 }
