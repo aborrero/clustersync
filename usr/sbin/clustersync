@@ -6,7 +6,7 @@ THIS="`uname -n`"
 [ ! -z "$THIS" ] || { echo "E: Unable to get the name of this machine" >&2 ; exit 1 ; }
 
 # Loading libraries, config and validating execution
-source $LIBCLUSTERSYNC || { echo "E: Unable to load [$LIBCLUSTERSYNC]" >&2 ; exit 1 ; }
+source $LIBCLUSTERSYNC 2>/dev/null || { echo "E: Unable to load [$LIBCLUSTERSYNC]" >&2 ; exit 1 ; }
 message "DEBUG-2: Library loaded, now trying to finish the start process."
 config_load || exit 1 #Exit if unable to load the default config file
 check_root || { message "E: Not running as root" ; exit 1 ; }

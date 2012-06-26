@@ -18,53 +18,39 @@ LOGGER_ARGS="-t clustersync[$PID] --"
 function message()
 {
 	# If error, print to stderr directly
-	grep ^"E: " <<< $1 > /dev/null 2> /dev/null && echo $1 >&2
+	[[ $1 =~ ^"E: " ]] && echo $1 >&2
 
 	# Lets print or not the message, what ever the user choices
         case "$LOGLEVEL" in
-
-        "")
-		#same as error, what is default
-                egrep  ^"E: " <<< $1 > /dev/null 2>/dev/null
-                if [ $? -eq 0 ]
-                then
-                        $LOGGER_BIN $LOGGER_ARGS $1
-                fi
-                ;;
-
-        "error")
-                egrep  ^"E: " <<< $1 > /dev/null 2>/dev/null
-                if [ $? -eq 0 ]
-                then
-                        $LOGGER_BIN $LOGGER_ARGS $1
-                fi
+        "error"|"")
+		# same as error, what is default
+		[[ $1 =~ ^"E: " ]] && $LOGGER_BIN $LOGGER_ARGS $1
                 ;;
 
         "warning")
-                egrep ^"E: "\|^"W: " <<< $1 > /dev/null 2>/dev/null
-                if [ $? -eq 0 ]
-                then
-                        $LOGGER_BIN $LOGGER_ARGS $1
-                fi
+		[[ $1 =~ ^"E: " ]] || \
+		[[ $1 =~ ^"W: " ]] && $LOGGER_BIN $LOGGER_ARGS $1
                 ;;
         "info")
-                egrep  ^"E: "\|^"I: "\|^"W: " <<< $1 > /dev/null 2>/dev/null
-                if [ $? -eq 0 ]
-                then
-                        $LOGGER_BIN $LOGGER_ARGS $1
-                fi
+		[[ $1 =~ ^"E: " ]] || \
+		[[ $1 =~ ^"W: " ]] || \
+		[[ $1 =~ ^"I: " ]] && $LOGGER_BIN $LOGGER_ARGS $1
                 ;;
 
         "debug1")
-                egrep  ^"DEBUG-1: "\|^"E: "\|^"I: "\|^"W: " <<< $1 > /dev/null 2>/dev/null
-                if [ $? -eq 0 ]
-                then
-                        $LOGGER_BIN -s $LOGGER_ARGS $1
-                fi
+		[[ $1 =~ ^"E: " ]] || \
+		[[ $1 =~ ^"W: " ]] || \
+		[[ $1 =~ ^"I: " ]] || \
+		[[ $1 =~ ^"DEBUG-1: " ]] && $LOGGER_BIN $LOGGER_ARGS $1
                 ;;
 
         "debug2")
-                $LOGGER_BIN -s $LOGGER_ARGS $1
+		# i'm using regular expresion comparision
+		[[ $1 =~ ^"E: " ]] || \
+		[[ $1 =~ ^"W: " ]] || \
+		[[ $1 =~ ^"I: " ]] || \
+		[[ $1 =~ ^"DEBUG-2: " ]] || \
+		[[ $1 =~ ^"DEBUG-1: " ]] && $LOGGER_BIN $LOGGER_ARGS $1
                 ;;
 
         "no")
@@ -77,7 +63,7 @@ function message()
 
 function validate_execution()
 {
-	message "DEBUG-2: function validate_execution"
+	message "DEBUG-2: function validate_execution()"
 
 	if [ -e $LOCK_FILE ]
 	then
@@ -96,7 +82,7 @@ function validate_execution()
 
 function validate_required_bins()
 {
-	message "DEBUG-2: function validate_required_bins"
+	message "DEBUG-2: function validate_required_bins()"
 	[ -x $RSYNC_BIN ] || { message "E: The bin [$RSYNC_BIN] was not found or wrong permission" ; return 1 ; }
 	[ -x $LOGGER_BIN ] || { message "E: The bin [$LOGGER_BIN] was not found or wrong permission" ; return 1 ; }
 	message "DEBUG-1: all required bins are OK."
@@ -106,7 +92,7 @@ function validate_required_bins()
 function check_root()
 {
 	message "DEBUG-2: function check_root()"
-	[ `id -u` -eq 0 ] || return 1
+	[ `/usr/bin/id -u` -eq 0 ] || return 1
 	message "DEBUG-1: running as root. This is OK."
 	return 0
 }
@@ -127,19 +113,12 @@ function config_load()
 	message "DEBUG-1: $CONFIG_FILE loaded success."
 
 	# Validating INTERVAL option
-	local flag_use_default_interval=0
-	[ -z "$INTERVAL" ] && flag_use_default_interval=1
-	egrep ^[[:digit:]]+$ <<< $INTERVAL > /dev/null 2> /dev/null || flag_use_default_interval=1
-	[ "$INTERVAL" -lt 0 ] 2> /dev/null && flag_use_default_interval=1
-	[ $flag_use_default_interval -eq 1 ] && { INTERVAL=30 ; message "W: Using default INTERVAL, 30 seconds." ; }
+	# i'm using a regexp. The variable must be a string starting&ending with a possitive number
+	[[ $INTERVAL =~ ^[0-9]+$ ]] || { INTERVAL=30 ; message "W: Using default INTERVAL, 30 seconds." ; }
 
 	# Validating BWLIMIT option
-	local flag_use_default_bwlimit=0
-	[ -z "$BWLIMIT" ] && flag_use_default_bwlimit=1
-	egrep ^[[:digit:]]+$ <<< $BWLIMIT > /dev/null 2> /dev/null || flag_use_default_bwlimit=1
-	[ "$BWLIMIT" -lt 0 ] 2> /dev/null && flag_use_default_interval=1
-	[ $flag_use_default_bwlimit -eq 1 ] && { BWLIMIT=0 ; message "W: Using default BWLIMIT, no limit :)" ; }
-
+	# i'm using a regexp. The variable must be a string starting&ending with a possitive number
+	[[ $BWLIMIT =~ ^[0-9]+$ ]] || { BWLIMIT=0 ; message "W: Using default BWLIMIT, no limit." ; }
 	return 0
 }
 
