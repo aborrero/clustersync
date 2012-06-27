@@ -157,6 +157,8 @@ function calculate_rsync_command()
 function loop_sync_files()
 {
 	message "DEBUG-2: function loop_sync_files()"
+	oldIFS=$IFS
+        IFS=$' \t\n'
 
 	# the function calculate_rsync_command uses the new global variable
 	rsync_command=""
@@ -194,5 +196,6 @@ function loop_sync_files()
 			message "DEBUG-2: Local node. Doing nothing."
 		fi
 	done
+	IFS=$oldIFS
 	return 0
 }
