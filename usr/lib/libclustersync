@@ -38,6 +38,7 @@ function message()
                 ;;
 
         "debug1")
+		# i'm using regular expresion comparision
 		[[ $1 =~ ^"E: " ]] || \
 		[[ $1 =~ ^"W: " ]] || \
 		[[ $1 =~ ^"I: " ]] || \
@@ -45,12 +46,7 @@ function message()
                 ;;
 
         "debug2")
-		# i'm using regular expresion comparision
-		[[ $1 =~ ^"E: " ]] || \
-		[[ $1 =~ ^"W: " ]] || \
-		[[ $1 =~ ^"I: " ]] || \
-		[[ $1 =~ ^"DEBUG-2: " ]] || \
-		[[ $1 =~ ^"DEBUG-1: " ]] && $LOGGER_BIN $LOGGER_ARGS $1
+		$LOGGER_BIN $LOGGER_ARGS $1
                 ;;
 
         "no")
