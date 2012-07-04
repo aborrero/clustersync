@@ -96,9 +96,9 @@ function check_root()
 function clean_up()
 {
 	message "DEBUG-2: function clean_up()"
+	message "I: Cleaning up and finishing..."
 	rm -rf $LOCK_FILE 2> /dev/null
 	message "DEBUG-1: The return code of cleaning the LOCK_FILE [$LOCK_FILE] is $?"
-	message "I: Cleaning up and finishing..."
 	exit 0
 }
 
