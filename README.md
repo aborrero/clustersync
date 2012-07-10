@@ -8,6 +8,8 @@ This software is lincesed under GPL.
 
 UNDER DEVELOPMENT!
 
+![](http://2.bp.blogspot.com/-EDz2rKYDwaM/T9jtE7_EeuI/AAAAAAAAB6A/FkKWmRNh0oE/s1600/clustersync.png)
+
 Clustersync contact every node you configure looking for changes in files, using Rsync.
 If any file have changed, then it copies the changes locally.
 
